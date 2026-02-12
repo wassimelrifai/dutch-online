@@ -1,0 +1,23 @@
+{
+  "name": "dutch-game",
+  "version": "1.0.0",
+  "description": "Jeu de cartes Dutch multijoueur en temps réel",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "game",
+    "dutch",
+    "card-game",
+    "socket.io",
+    "express"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
+  }
+}
