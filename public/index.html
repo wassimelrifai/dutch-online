@@ -418,7 +418,11 @@
         </div>
     </div>
 
-    <div id="game-ui">
+        <div id="game-ui">
+        <button onclick="leaveGame()" style="position:absolute; top:10px; left:10px; background:#f44336; color:white; font-size:0.8em; padding:5px 10px; z-index:1000;">
+            🚪 Quitter
+        </button>
+
         <div id="opponents-container"></div>
 
         <div class="table-center">
@@ -534,19 +538,36 @@
                 btn.innerText = "Entrer dans le Casino";
             });
 
-            socket.on('updateLobby', (players) => {
+            socket.on('updateLobby', (data) => {
+                // Compatibilité : data peut être l'objet {players, leaderId} ou juste le tableau (vieux code)
+                const playersList = data.players || data; 
+                const leaderId = data.leaderId;
+                const mySocketId = socket.id;
+
                 const div = document.getElementById('lobby-info');
-                div.innerHTML = `<span style="opacity:0.8">À table :</span> <br> <span style="color:white; font-size:1.1em">${players.join(' • ')}</span>`;
+                div.innerHTML = `<h3>Joueurs: ${playersList.join(', ')}</h3>`;
                 
-                if (players.includes(name)) {
+                const name = document.getElementById('username').value;
+                if (playersList.includes(name)) {
                      document.getElementById('username').disabled = true;
                      document.getElementById('room').disabled = true;
-                     btn.style.display = 'none'; 
+                     document.querySelector('#login button').style.display = 'none';
                 }
 
-                if(players.length >= 2) {
-                    if(!document.getElementById('btn-start-game')) {
-                        div.innerHTML += `<div style="margin-top:20px;"><button id="btn-start-game" class="btn-confirm" onclick="socket.emit('startGame', '${room}')">DISTRIBUER LES CARTES</button></div>`;
+                if(playersList.length >= 2) {
+                    // --- MODIFICATION : SEUL LE CHEF VOIT LE BOUTON ---
+                    if (leaderId === mySocketId) {
+                        if(!document.getElementById('btn-start-game')) {
+                            div.innerHTML += `<button id="btn-start-game" onclick="socket.emit('startGame', '${document.getElementById('room').value}')">👑 LANCER LA PARTIE</button>`;
+                        }
+                    } else {
+                        // Si je ne suis pas chef, j'affiche un message d'attente
+                        if(!document.getElementById('msg-waiting')) {
+                            div.innerHTML += `<div id="msg-waiting" style="margin-top:10px; opacity:0.8;">En attente du chef de salle...</div>`;
+                        }
+                        // On s'assure de supprimer le bouton s'il existait (cas où le chef change)
+                        const btn = document.getElementById('btn-start-game');
+                        if(btn) btn.remove();
                     }
                 }
             });
@@ -711,18 +732,31 @@
             bar.innerHTML = ''; 
             const room = document.getElementById('room').value;
 
-            // --- FIN DE PARTIE ---
+            // --- 1. FIN DE PARTIE : BOUTON REJOUER ---
             if (gameState.state === 'ENDED') {
-                bar.innerHTML = `
-                    <div style="text-align:center; animation: deal 0.5s;">
-                        <div style="margin-bottom:10px; font-weight:bold; color:var(--gold-primary); font-family:'Cinzel', serif; font-size:1.3em;">
-                            🏆 PARTIE TERMINÉE
-                        </div>
+                const isLeader = (gameState.leaderId === myId);
+                
+                let content = `
+                    <div style="text-align:center; animation: fadein 1s;">
+                        <div style="margin-bottom:10px; font-weight:bold; color:#ffeb3b; font-size:1.2em;">
+                            🏆 Partie Terminée !
+                        </div>`;
+                
+                if (isLeader) {
+                    content += `
                         <button class="btn-confirm" onclick="socket.emit('restartGame', '${room}')">
-                            🔄 REJOUER
-                        </button>
-                    </div>`;
-                return;
+                            👑 REJOUER (Même salle)
+                        </button>`;
+                } else {
+                    content += `
+                        <div style="font-style:italic; opacity:0.8;">
+                            En attente du chef de salle pour rejouer...
+                        </div>`;
+                }
+                
+                content += `</div>`;
+                bar.innerHTML = content;
+                return; // On s'arrête là
             }
 
             // --- DEBUT : MEMORISATION ---
@@ -817,6 +851,18 @@
                 swapSourceIndex = null;
             }
         }
+        function leaveGame() {
+            const room = document.getElementById('room').value;
+            if(confirm("Veux-tu vraiment quitter la partie ?")) {
+                socket.emit('leaveGame', room);
+            }
+        }
+
+        // Confirmation du serveur que je suis parti
+        socket.on('leftGameSuccess', () => {
+            // On recharge la page pour revenir propre à l'écran de login
+            window.location.reload();
+        });
 
         socket.on('gameMessage', (msg) => log(msg));
         socket.on('error', (msg) => alert(msg));

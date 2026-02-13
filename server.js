@@ -62,6 +62,7 @@ io.on('connection', (socket) => {
 
         socket.join(room);
         
+        // 1. Création si n'existe pas
         if (!games[room]) {
             games[room] = {
                 players: [],
@@ -72,37 +73,31 @@ io.on('connection', (socket) => {
                 dutchCaller: null, 
                 lastRound: false,
                 actionState: null,
-                lastPlayerId: null
+                pendingDutch: false,
+                lastPlayerId: null,
+                turnPhase: 'ACTION',
+                leaderId: null // Important : on initialise à null
             };
         }
 
         const game = games[room];
 
-        // --- SÉCURITÉ ---
-        // 1. Déjà connecté ?
+        // 2. Sécurités (Déjà là, Salle pleine, Partie en cours...)
         if (game.players.find(p => p.id === socket.id)) return;
-
-        // 2. Pseudo pris ?
         if (game.players.find(p => p.name.toLowerCase() === playerName.toLowerCase())) {
             socket.emit('error', 'Pseudo déjà pris !');
             return;
         }
-
-        // 3. Salle pleine ?
         if (game.players.length >= 6) {
             socket.emit('error', 'Salle pleine !');
             return;
         }
-
-        // --- MODIFICATION ICI : AUTORISER SI 'ENDED' ---
-        // On refuse seulement si le jeu est "EN COURS" (PLAYING)
         if (game.state === 'PLAYING') {
-            socket.emit('error', 'Partie en cours, impossible de rejoindre maintenant.');
+            socket.emit('error', 'Partie en cours...');
             return;
         }
-        // -----------------------------------------------
 
-        // Ajouter le joueur
+        // 3. Ajout du joueur
         game.players.push({
             id: socket.id,
             name: playerName,
@@ -111,18 +106,32 @@ io.on('connection', (socket) => {
             score: 0
         });
 
-        // --- GESTION DE L'AFFICHAGE SELON L'ÉTAT ---
+        // --- CORRECTION CRUCIALE : ASSIGNATION DU CHEF ---
+        // Si aucun chef n'est défini OU si le chef actuel n'est plus dans la salle
+        const leaderExists = game.players.find(p => p.id === game.leaderId);
+        
+        if (!game.leaderId || !leaderExists) {
+            // Le premier joueur de la liste devient le chef
+            game.leaderId = game.players[0].id;
+        }
+
+        
+
+        // 4. Notification
         if (game.state === 'LOBBY') {
-            // Comportement classique : on met à jour la liste d'attente
-            io.to(room).emit('updateLobby', game.players.map(p => p.name));
+            io.to(room).emit('updateLobby', { 
+                players: game.players.map(p => p.name), 
+                leaderId: game.leaderId 
+            });
         } 
         else if (game.state === 'ENDED') {
-            // Si le jeu est fini, le nouveau joueur doit voir le tableau des scores directement
-            // On envoie un message global pour dire "Un nouveau joueur est arrivé !"
-            io.to(room).emit('gameMessage', `👋 ${playerName} a rejoint la partie pour le prochain tour !`);
-            
-            // On met à jour l'état pour tout le monde (pour que le nouveau joueur voie les scores)
+            io.to(room).emit('gameMessage', `👋 ${playerName} a rejoint pour le prochain tour !`);
             broadcastGameState(room);
+            // Important : Mettre à jour le lobby aussi pour afficher le bouton au chef s'il était caché
+            io.to(room).emit('updateLobby', { 
+                players: game.players.map(p => p.name), 
+                leaderId: game.leaderId 
+            });
         }
     });
 
@@ -130,6 +139,11 @@ io.on('connection', (socket) => {
     socket.on('startGame', (room) => {
         const game = games[room];
         if (!game || game.players.length < 2) return;
+
+        if (game.leaderId !== socket.id) {
+            socket.emit('error', "Seul le Chef de la salle peut lancer la partie !");
+            return;
+        }
 
         game.deck = createDeck();
         game.state = 'PLAYING';
@@ -161,7 +175,7 @@ io.on('connection', (socket) => {
 
         // 2. Est-ce que j'ai déjà pioché une carte ? (LA CORRECTION EST ICI)
         if (game.drawnCard) {
-            socket.emit('error', "Tu as déjà pioché ! Tu dois jouer cette carte sale batard.");
+            socket.emit('error', "Tu as déjà pioché sale batard.");
             return;
         }
 
@@ -374,6 +388,16 @@ io.on('connection', (socket) => {
         const game = games[room];
         if (!game || game.state !== 'ENDED') return;
 
+        if (game.leaderId !== socket.id) {
+            socket.emit('error', "Seul le Chef de la salle peut relancer la partie !");
+            return;
+        }
+
+        if (game.players.length < 2) {
+            socket.emit('error', "Impossible de lancer la partie seul ! Attendez qu'un autre joueur rejoigne.");
+            return;
+        }
+
         console.log(`Redémarrage de la partie dans la salle ${room}`);
 
         // 1. SAUVEGARDE DU DUTCH CALLER (Avant le reset !)
@@ -457,34 +481,20 @@ io.on('connection', (socket) => {
         }
     });
 
-// Gérer la déconnexion
+// Quitter volontairement (Bouton)
+    socket.on('leaveGame', (room) => {
+        handlePlayerLeave(room, socket.id);
+        // On dit au client qu'il est bien parti (pour recharger la page)
+        socket.emit('leftGameSuccess');
+    });
+
+    // Quitter involontairement (Fermeture onglet / Crash internet)
     socket.on('disconnect', () => {
+        // On ne connaît pas la room directement ici, donc on cherche
         for (const room in games) {
             const game = games[room];
-            const playerIndex = game.players.findIndex(p => p.id === socket.id);
-
-            if (playerIndex !== -1) {
-                const playerName = game.players[playerIndex].name;
-
-                // On supprime le joueur si on est dans le LOBBY ou si la partie est FINIE (ENDED)
-                // Cela permet aux gens de partir entre deux parties sans casser le jeu
-                if (game.state === 'LOBBY' || game.state === 'ENDED') {
-                    game.players.splice(playerIndex, 1);
-                    
-                    if (game.state === 'LOBBY') {
-                        io.to(room).emit('updateLobby', game.players.map(p => p.name));
-                    } else {
-                        io.to(room).emit('gameMessage', `🚪 ${playerName} a quitté la salle.`);
-                        broadcastGameState(room); // Met à jour l'affichage pour ceux qui restent
-                    }
-
-                    if (game.players.length === 0) delete games[room];
-                } 
-                else {
-                    // Si on est en plein jeu (PLAYING), on ne supprime pas (pour éviter les crashs d'index)
-                    // Mais on prévient les autres
-                    io.to(room).emit('gameMessage', `⚠️ ${playerName} s'est déconnecté (AFK) !`);
-                }
+            if (game.players.find(p => p.id === socket.id)) {
+                handlePlayerLeave(room, socket.id);
                 break;
             }
         }
@@ -587,6 +597,108 @@ function broadcastGameState(room) {
             }
         }
     }
+}
+
+function handlePlayerLeave(room, socketId) {
+    const game = games[room];
+    if (!game) return;
+
+    const playerIndex = game.players.findIndex(p => p.id === socketId);
+    if (playerIndex === -1) return;
+
+    const player = game.players[playerIndex];
+    const handToCheck = player.hand; // On sauvegarde sa main
+
+    // 1. On retire le joueur
+    game.players.splice(playerIndex, 1);
+
+    // 2. Si la salle est vide, on supprime tout et on arrête
+    if (game.players.length === 0) {
+        console.log(`Salle ${room} vide, suppression.`);
+        delete games[room];
+        return;
+    }
+
+    // 3. GESTION DU CHEF
+    // Si le joueur qui part était le chef, on passe le relais au suivant (index 0)
+    if (game.leaderId === socketId) {
+        game.leaderId = game.players[0].id; // Le nouveau premier est le nouveau chef
+        io.to(room).emit('gameMessage', `👑 ${game.players[0].name} est maintenant le Chef de la salle !`);
+    }
+
+    // 4. GESTION DE LA PARTIE EN COURS
+    if (game.state === 'PLAYING') {
+        
+        // --- CAS CRITIQUE : IL NE RESTE QU'UN SEUL JOUEUR ---
+        if (game.players.length < 2) {
+            game.state = 'ENDED'; // On force la fin
+            // Reset des variables
+            game.dutchCaller = null;
+            game.lastRound = false;
+            game.actionState = null;
+            game.pendingDutch = false;
+            game.turnPhase = 'ACTION';
+            game.drawnCard = null;
+            game.lastPlayerId = null;
+
+            io.to(room).emit('gameMessage', `🚫 ${player.name} est parti. Partie annulée (Il faut être 2 minimum) !`);
+            
+            // On met à jour le plateau pour afficher l'écran de fin
+            broadcastGameState(room);
+            
+            // IMPORTANT : On met à jour le lobby pour que le survivant (Chef) voie le bouton Rejouer
+            io.to(room).emit('updateLobby', { 
+                players: game.players.map(p => p.name), 
+                leaderId: game.leaderId 
+            });
+            return; // On arrête là
+        }
+        // ----------------------------------------------------
+
+        // --- SINON LE JEU CONTINUE ---
+        // On remet les cartes du joueur dans la défausse
+        if (handToCheck.length > 0) {
+            const topCard = game.discardPile.pop();
+            game.discardPile.push(...handToCheck);
+            game.discardPile = shuffle(game.discardPile);
+            game.discardPile.push(topCard);
+        }
+
+        // Gestion de l'index du tour
+        if (playerIndex < game.currentPlayerIndex) {
+            game.currentPlayerIndex--;
+        } else if (playerIndex === game.currentPlayerIndex) {
+            // Si c'était à lui de jouer
+            if (game.currentPlayerIndex >= game.players.length) {
+                game.currentPlayerIndex = 0;
+            }
+            // Reset du tour pour le suivant
+            game.drawnCard = null;
+            game.drawnSource = null;
+            game.actionState = null;
+            game.turnPhase = 'ACTION';
+            game.pendingDutch = false;
+        }
+
+        // Nettoyage Dutch/Buzzer
+        if (game.dutchCaller === socketId) {
+            game.dutchCaller = null;
+            game.lastRound = false;
+            io.to(room).emit('gameMessage', "Le 'Dutcheur' est parti ! Le dernier tour est annulé.");
+        }
+        if (game.lastPlayerId === socketId) game.lastPlayerId = null;
+
+        broadcastGameState(room);
+    }
+
+    // 5. UPDATE FINAL DU LOBBY (CORRECTION ICI)
+    // On envoie bien l'objet { players, leaderId } et pas juste la liste !
+    io.to(room).emit('updateLobby', { 
+        players: game.players.map(p => p.name), 
+        leaderId: game.leaderId 
+    });
+    
+    io.to(room).emit('gameMessage', `🚪 ${player.name} a quitté la partie.`);
 }
 
 const PORT = process.env.PORT || 3000;
