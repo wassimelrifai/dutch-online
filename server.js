@@ -56,9 +56,13 @@ io.on('connection', (socket) => {
 
 // Rejoindre une salle
     socket.on('joinGame', ({ room, playerName }) => {
-        playerName = playerName.trim();
-        room = room.trim();
-        if (!playerName || !room) return;
+        playerName = (playerName || "").trim();
+        room = (room || "").trim();
+        
+        if (!playerName || !room) {
+            socket.emit('error', 'Pseudo et salle requis !');
+            return;
+        }
 
         socket.join(room);
         
@@ -76,18 +80,21 @@ io.on('connection', (socket) => {
                 pendingDutch: false,
                 lastPlayerId: null,
                 turnPhase: 'ACTION',
-                leaderId: null // Important : on initialise à null
+                leaderId: null 
             };
         }
 
         const game = games[room];
 
-        // 2. Sécurités (Déjà là, Salle pleine, Partie en cours...)
+        // 2. Sécurités 
         if (game.players.find(p => p.id === socket.id)) return;
-        if (game.players.find(p => p.name.toLowerCase() === playerName.toLowerCase())) {
+        
+        const nameTaken = game.players.find(p => p.name.toLowerCase() === playerName.toLowerCase());
+        if (nameTaken) {
             socket.emit('error', 'Pseudo déjà pris !');
-            return;
+            return; 
         }
+
         if (game.players.length >= 6) {
             socket.emit('error', 'Salle pleine !');
             return;
@@ -106,16 +113,11 @@ io.on('connection', (socket) => {
             score: 0
         });
 
-        // --- CORRECTION CRUCIALE : ASSIGNATION DU CHEF ---
-        // Si aucun chef n'est défini OU si le chef actuel n'est plus dans la salle
+        // Gestion du Chef
         const leaderExists = game.players.find(p => p.id === game.leaderId);
-        
         if (!game.leaderId || !leaderExists) {
-            // Le premier joueur de la liste devient le chef
             game.leaderId = game.players[0].id;
         }
-
-        
 
         // 4. Notification
         if (game.state === 'LOBBY') {
@@ -127,7 +129,6 @@ io.on('connection', (socket) => {
         else if (game.state === 'ENDED') {
             io.to(room).emit('gameMessage', `👋 ${playerName} a rejoint pour le prochain tour !`);
             broadcastGameState(room);
-            // Important : Mettre à jour le lobby aussi pour afficher le bouton au chef s'il était caché
             io.to(room).emit('updateLobby', { 
                 players: game.players.map(p => p.name), 
                 leaderId: game.leaderId 
@@ -147,13 +148,12 @@ io.on('connection', (socket) => {
 
         game.deck = createDeck();
         game.state = 'PLAYING';
-        game.discardPile = [game.deck.pop()]; // 1 carte défausse
+        game.discardPile = [game.deck.pop()]; 
         game.currentPlayerIndex = 0;
 
         // Distribution : 4 cartes chacun
         game.players.forEach(p => {
             p.hand = [game.deck.pop(), game.deck.pop(), game.deck.pop(), game.deck.pop()];
-            // On révèle seulement 2 cartes au début (indices 0 et 1 pour simplifier, ou aléatoire)
             p.knownCards = [0, 1]; 
         });
 
@@ -165,27 +165,26 @@ io.on('connection', (socket) => {
         const game = games[room];
         if (!game || game.state !== 'PLAYING') return;
         
-        // Sécurité : source valide uniquement
+        if (game.endingTimer) {
+            socket.emit('error', "La partie est finie ! Seuls les Snaps sont autorisés.");
+            return;
+        }
         if (source !== 'deck') return;
 
         const playerIdx = game.players.findIndex(p => p.id === socket.id);
-        
-        // 1. Est-ce mon tour ?
         if (playerIdx !== game.currentPlayerIndex) return; 
 
-        // 2. Est-ce que j'ai déjà pioché une carte ? (LA CORRECTION EST ICI)
         if (game.drawnCard) {
-            socket.emit('error', "Tu as déjà pioché sale batard.");
+            socket.emit('error', "Tu as déjà pioché !");
             return;
         }
 
-        // 3. Est-ce qu'un pouvoir est en attente ?
         if (game.actionState) return; 
 
         // --- Exécution de la pioche ---
         let drawnCard = game.deck.pop();
         
-        // Gestion pioche vide
+        // Gestion pioche vide (Mélange défausse)
         if (game.deck.length === 0) {
             if (game.discardPile.length > 1) {
                 const topDiscard = game.discardPile.pop();
@@ -201,15 +200,27 @@ io.on('connection', (socket) => {
         
         if (!drawnCard) return;
 
+        // 1. INFO PRIVÉE IMMÉDIATE (Pour que le joueur n'attende pas)
+        // On envoie la carte tout de suite à celui qui joue
+        socket.emit('privateCardDrawn', drawnCard);
+
+        // 2. ANIMATION PUBLIQUE (Pour que tout le monde voie le mouvement)
+        io.to(room).emit('animate', {
+            type: 'DRAW',
+            playerId: socket.id
+        });
+
+        // 3. MISE À JOUR ÉTAT SERVEUR
         game.drawnCard = drawnCard;
         game.drawnSource = 'deck'; 
         
-        broadcastGameState(room);
+        // 4. SYNCHRONISATION GLOBALE DIFFÉRÉE
+        // Les autres joueurs attendront la fin de l'animation pour voir le résultat fixe
+        broadcastWithDelay(room, 900);
     });
 
     // Jouer/Échanger la carte piochée
     socket.on('playAction', ({ room, action, cardIndex }) => {
-        // action: 'swap' (échanger avec main) ou 'discard' (jeter la pioche)
         const game = games[room];
         if (!game || !game.drawnCard) return;
 
@@ -218,37 +229,47 @@ io.on('connection', (socket) => {
         
         if (action === 'swap') {
             const oldCard = player.hand[cardIndex];
-            player.hand[cardIndex] = game.drawnCard;
-            player.knownCards.push(cardIndex); // La nouvelle carte est connue (posée face visible)
-            addToDiscard(room, oldCard, playerIdx); // Vérifie pouvoirs
-        } else if (action === 'discard') {
-            if (game.drawnSource === 'discard') return; // Interdit de reprendre de la défausse pour la rejeter
-            addToDiscard(room, game.drawnCard, playerIdx); // Vérifie pouvoirs
             
-            // Si on défausse une carte piochée, on peut devoir la révéler si c'est une carte à effet ? 
-            // Règle simplifiée ici : si on jette la pioche, c'est fini, sauf pouvoir immédiat.
+            // Animation Swap
+            io.to(room).emit('animate', {
+                type: 'SWAP_SELF',
+                playerId: socket.id,
+                cardIndex: cardIndex
+            });
+
+            player.hand[cardIndex] = game.drawnCard;
+            player.knownCards.push(cardIndex); 
+            addToDiscard(room, oldCard, playerIdx); 
+
+        } else if (action === 'discard') {
+            if (game.drawnSource === 'discard') return;
+            
+            // Animation Discard
+            io.to(room).emit('animate', {
+                type: 'DISCARD_DRAWN',
+                playerId: socket.id
+            });
+
+            addToDiscard(room, game.drawnCard, playerIdx); 
         }
 
         game.drawnCard = null;
         game.drawnSource = null;
 
-        // Si aucun pouvoir n'est activé par addToDiscard, on passe le tour
         if (!game.actionState) {
             nextTurn(room);
         }
         
-        broadcastGameState(room);
+        broadcastWithDelay(room, 900);
     });
 
-// Résoudre le pouvoir (Action effectuée)
+// Résoudre le pouvoir
     socket.on('resolvePower', ({ room, type, targetPlayerId, targetCardIndex, myCardIndex }) => {
         const game = games[room];
-        // Vérif sécurité : est-ce bien le bon type d'action ?
         if (!game || !game.actionState || game.actionState.type !== type) return;
 
         const me = game.players.find(p => p.id === socket.id);
         
-        // --- Exécution du pouvoir ---
         if (type === 'PEEK') { 
             const targetPlayer = game.players.find(p => p.id === me.id);
             if (targetPlayer && targetPlayer.hand[targetCardIndex]) {
@@ -260,33 +281,38 @@ io.on('connection', (socket) => {
         } else if (type === 'SWAP') { 
             const targetPlayer = game.players.find(p => p.id === targetPlayerId);
             if (targetPlayer && me) {
+
+                io.to(room).emit('animate', {
+                    type: 'SWAP_PLAYERS',
+                    fromId: me.id,
+                    fromIndex: myCardIndex,
+                    toId: targetPlayer.id,
+                    toIndex: targetCardIndex
+                });
+                
                 const myCard = me.hand[myCardIndex];
                 const theirCard = targetPlayer.hand[targetCardIndex];
                 
-                // Échange
                 me.hand[myCardIndex] = theirCard;
                 targetPlayer.hand[targetCardIndex] = myCard;
                 
-                // Oubli (Blind Swap)
                 me.knownCards = me.knownCards.filter(idx => idx !== myCardIndex);
                 targetPlayer.knownCards = targetPlayer.knownCards.filter(idx => idx !== targetCardIndex);
             }
         }
 
-        // --- Gestion du tour après pouvoir ---
-        const wasSnap = game.actionState.isSnap; // On sauvegarde l'info avant de reset
-        game.actionState = null; // Le pouvoir est fini
+        const wasSnap = game.actionState.isSnap; 
+        game.actionState = null; 
 
         if (wasSnap) {
-            // C'était un snap : On ne change PAS de joueur actif.
-            // Le jeu reprend là où il en était (au joueur dont c'est le tour de piocher).
             io.to(room).emit('gameMessage', 'Pouvoir terminé, le jeu reprend.');
         } else {
-            // C'était un coup normal (défausse) : Tour fini, au suivant.
             nextTurn(room);
         }
-        
-        broadcastGameState(room);
+
+        // Délai long pour le Valet (3s), court pour la Dame
+        const delay = (type === 'SWAP') ? 3100 : 1000;
+        broadcastWithDelay(room, delay);
     });
 
   socket.on('skipPower', (room) => {
@@ -298,10 +324,7 @@ io.on('connection', (socket) => {
         
         io.to(room).emit('gameMessage', 'Pouvoir ignoré.');
 
-        if (wasSnap) {
-            // Snap annulé : on reprend le jeu sans changer de tour
-        } else {
-            // Tour normal annulé : on passe au suivant
+        if (!wasSnap) {
             nextTurn(room);
         }
 
@@ -321,58 +344,41 @@ io.on('connection', (socket) => {
         const topDiscard = game.discardPile[game.discardPile.length - 1];
         const snappedCard = snapper.hand[cardIndex];
 
-        // Vérification stricte : même valeur
         if (snappedCard.value === topDiscard.value) {
             
-            // --- NOUVEAU : INTERRUPTION DU POUVOIR ---
-            // Si quelqu'un (le joueur actif ou un précédent snapper) était en train de réfléchir
             if (game.actionState) {
                 const previousPlayer = game.players[game.actionState.playerIdx];
                 io.to(room).emit('gameMessage', `⚡ TROP LENT ! Le Snap de ${snapper.name} a annulé le pouvoir de ${previousPlayer.name} !`);
-                
-                // On supprime l'action en cours !
                 game.actionState = null;
-                
-                // Note : Si c'était le tour normal d'un joueur et qu'il n'a pas fini son pouvoir,
-                // techniquement le tour passe. Mais pour simplifier, on considère que le snap
-                // "vole" la priorité.
             }
-            // ------------------------------------------
 
-            // SUCCÈS STANDARD DU SNAP
+            io.to(room).emit('animate', {
+                type: 'SNAP',
+                playerId: socket.id,
+                cardIndex: cardIndex
+            });
+
             game.discardPile.push(snappedCard);
             snapper.hand.splice(cardIndex, 1);
             
-            // Mise à jour des index connus
             snapper.knownCards = snapper.knownCards
                 .filter(i => i !== cardIndex)
                 .map(i => i > cardIndex ? i - 1 : i);
             
             io.to(room).emit('gameMessage', `⚡ ${snapper.name} a réussi un "À la volée" !`);
 
-            // DÉCLENCHEMENT DU NOUVEAU POUVOIR (Celui du Snapper)
             if (snappedCard.value === 'J') {
-                game.actionState = { 
-                    type: 'SWAP', 
-                    playerIdx: snapperIdx, 
-                    isSnap: true 
-                };
+                game.actionState = { type: 'SWAP', playerIdx: snapperIdx, isSnap: true };
                 io.to(room).emit('gameMessage', `🗡️ POUVOIR VALET (Snap) !`);
             } 
             else if (snappedCard.value === 'Q') {
-                game.actionState = { 
-                    type: 'PEEK', 
-                    playerIdx: snapperIdx, 
-                    isSnap: true 
-                };
+                game.actionState = { type: 'PEEK', playerIdx: snapperIdx, isSnap: true };
                 io.to(room).emit('gameMessage', `👁️ POUVOIR DAME (Snap) !`);
             }
 
-            // Vérif fin de main
             if (snapper.hand.length === 0) triggerEndGame(room, snapper.id);
 
         } else {
-            // ÉCHEC (Pénalité)
             const penaltyCard = game.deck.pop();
             if(penaltyCard) {
                 snapper.hand.push(penaltyCard);
@@ -380,10 +386,10 @@ io.on('connection', (socket) => {
             }
         }
         
-        broadcastGameState(room);
+        broadcastWithDelay(room, 900);
     });
 
-// Relancer une partie (Rejouer)
+// Relancer une partie
     socket.on('restartGame', (room) => {
         const game = games[room];
         if (!game || game.state !== 'ENDED') return;
@@ -394,48 +400,38 @@ io.on('connection', (socket) => {
         }
 
         if (game.players.length < 2) {
-            socket.emit('error', "Impossible de lancer la partie seul ! Attendez qu'un autre joueur rejoigne.");
+            socket.emit('error', "Impossible de lancer la partie seul !");
             return;
         }
 
-        console.log(`Redémarrage de la partie dans la salle ${room}`);
-
-        // 1. SAUVEGARDE DU DUTCH CALLER (Avant le reset !)
         const previousDutchCaller = game.dutchCaller;
 
-        // 2. Reset complet du jeu
         game.deck = createDeck(); 
         game.discardPile = [game.deck.pop()];
         game.state = 'PLAYING';
-        game.dutchCaller = null; // On remet à null pour la nouvelle partie
+        game.dutchCaller = null; 
         game.lastRound = false;
         game.actionState = null;
         game.lastPlayerId = null;
+        if(game.endingTimer) clearTimeout(game.endingTimer);
+        game.endingTimer = null;
         
-        // 3. DÉFINITION DU PREMIER JOUEUR
-        // On cherche l'index du joueur qui avait fait Dutch
-        let starterIndex = 0; // Par défaut le premier
-        
+        let starterIndex = 0; 
         if (previousDutchCaller) {
             const foundIndex = game.players.findIndex(p => p.id === previousDutchCaller);
-            // Si le joueur est toujours dans la salle, c'est à lui
-            if (foundIndex !== -1) {
-                starterIndex = foundIndex;
-            }
+            if (foundIndex !== -1) starterIndex = foundIndex;
         }
         
         game.currentPlayerIndex = starterIndex;
 
-        // 4. Redistribution des mains
         game.players.forEach(p => {
             p.hand = [game.deck.pop(), game.deck.pop(), game.deck.pop(), game.deck.pop()];
             p.knownCards = [0, 1]; 
-            p.score = 0; // (Optionnel : remettre le score à 0 ou cumuler)
+            p.score = 0; 
         });
 
-        // 5. Notification
         const starterName = game.players[starterIndex].name;
-        io.to(room).emit('gameMessage', `🔄 Nouvelle partie ! ${starterName} commence (car il a fait Dutch).`);
+        io.to(room).emit('gameMessage', `🔄 Nouvelle partie ! ${starterName} commence.`);
         broadcastGameState(room);
     });
 
@@ -447,16 +443,18 @@ io.on('connection', (socket) => {
         const player = game.players.find(p => p.id === socket.id);
         const isCurrentPlayer = game.players[game.currentPlayerIndex].id === socket.id;
         
-        // CONDITION 1 : C'est mon tour (je peux Dutch pendant que je joue)
-        let canDutch = isCurrentPlayer;
+        let canDutch = false;
 
-        // CONDITION 2 (Le Buzzer) : C'était mon tour juste avant ET le suivant n'a pas encore pioché
-        if (game.lastPlayerId === socket.id && !game.drawnCard) {
+        // CAS A : Je suis le JOUEUR ACTIF
+        if (isCurrentPlayer) {
+            canDutch = true;
+        }
+        // CAS B : Je suis le JOUEUR PRÉCÉDENT (Buzzer)
+        else if (game.lastPlayerId === socket.id && !game.drawnCard && !game.actionState) {
             canDutch = true;
         }
 
         if (canDutch) {
-            // On vérifie qu'un Dutch n'est pas déjà actif
             if (game.lastRound) {
                  socket.emit('error', "Trop tard, le dernier tour est déjà lancé !");
                  return;
@@ -465,32 +463,27 @@ io.on('connection', (socket) => {
             game.dutchCaller = socket.id;
             game.lastRound = true;
             
-            // Si c'était le buzzer (joueur précédent), on notifie que c'était juste !
             if (!isCurrentPlayer) {
-                io.to(room).emit('gameMessage', `⚡ JUSTE À TEMPS ! ${player.name} annonce DUTCH avant la pioche du suivant !`);
+                io.to(room).emit('gameMessage', `⚡ JUSTE À TEMPS ! ${player.name} annonce DUTCH avant la pioche !`);
             } else {
                 io.to(room).emit('gameMessage', `🛑 DUTCH ANNONCÉ par ${player.name} !`);
             }
 
             broadcastGameState(room);
         } else {
-            // Si le joueur suivant a déjà pioché
-            if (game.lastPlayerId === socket.id && game.drawnCard) {
-                socket.emit('error', "Trop tard ! Le joueur suivant a déjà pioché.");
+            if (game.lastPlayerId === socket.id) {
+                if (game.drawnCard) socket.emit('error', "Trop tard ! Le joueur suivant a déjà pioché.");
+                else if (game.actionState) socket.emit('error', "Trop tard ! Le joueur suivant a déjà joué sa carte.");
             }
         }
     });
 
-// Quitter volontairement (Bouton)
     socket.on('leaveGame', (room) => {
         handlePlayerLeave(room, socket.id);
-        // On dit au client qu'il est bien parti (pour recharger la page)
         socket.emit('leftGameSuccess');
     });
 
-    // Quitter involontairement (Fermeture onglet / Crash internet)
     socket.on('disconnect', () => {
-        // On ne connaît pas la room directement ici, donc on cherche
         for (const room in games) {
             const game = games[room];
             if (game.players.find(p => p.id === socket.id)) {
@@ -507,34 +500,39 @@ function addToDiscard(room, card, playerIdx) {
     const game = games[room];
     game.discardPile.push(card);
 
-    // Vérification des pouvoirs
-    // Valet (J)
     if (card.value === 'J') {
         game.actionState = { type: 'SWAP', playerIdx: playerIdx };
     } 
-    // Dame (Q)
     else if (card.value === 'Q') {
         game.actionState = { type: 'PEEK', playerIdx: playerIdx };
     }
-    // Si pas de pouvoir, rien ne se passe ici, le nextTurn sera appelé par playAction
 }
 
 function nextTurn(room) {
     const game = games[room];
     
     game.lastPlayerId = game.players[game.currentPlayerIndex].id;
-    // Si c'était le dernier tour et qu'on revient au caller de Dutch
+    
+    // GESTION FIN DE MANCHE
     if (game.lastRound) {
         let nextIdx = (game.currentPlayerIndex + 1) % game.players.length;
+        
         if (game.players[nextIdx].id === game.dutchCaller) {
-            endGame(room);
-            return;
+            
+            if (game.endingTimer) return;
+
+            io.to(room).emit('gameMessage', `⏳ Fin de partie dans 4 secondes... SNAPPEZ VITE !`);
+            
+            game.endingTimer = setTimeout(() => {
+                endGame(room);
+            }, 4000); 
+
+            return; 
         }
     }
     
     game.currentPlayerIndex = (game.currentPlayerIndex + 1) % game.players.length;
     
-    // Si le joueur suivant n'a plus de cartes (cas rare), on passe
     if (game.players[game.currentPlayerIndex].hand.length === 0 && !game.lastRound) {
          triggerEndGame(room, game.players[game.currentPlayerIndex].id);
     }
@@ -542,54 +540,54 @@ function nextTurn(room) {
 
 function triggerEndGame(room, playerId) {
     const game = games[room];
-    if (game.lastRound) return; // Déjà en cours
+    if (game.lastRound) return; 
     game.lastRound = true;
-    game.dutchCaller = playerId; // Celui qui n'a plus de carte est comme celui qui a dit Dutch
+    game.dutchCaller = playerId; 
     io.to(room).emit('gameMessage', `Fin de partie déclenchée (plus de cartes) ! Dernier tour.`);
 }
 
 function endGame(room) {
     const game = games[room];
+    if (!game) return;
+
+    if (game.endingTimer) {
+        clearTimeout(game.endingTimer);
+        game.endingTimer = null;
+    }
     game.state = 'ENDED';
     
-    // Révéler toutes les cartes et calculer scores
     game.players.forEach(p => {
         let score = 0;
         p.hand.forEach(c => score += c.points);
         p.score = score;
-        p.knownCards = p.hand.map((_, i) => i); // Tout révéler
+        p.knownCards = p.hand.map((_, i) => i); 
     });
     
     broadcastGameState(room);
 }
 
-// Fonction cruciale : Envoie l'état du jeu mais cache les cartes inconnues
 function broadcastGameState(room) {
     const game = games[room];
     if (!game) return;
 
-    // Pour chaque socket dans la room, on envoie une version "nettoyée"
     const sockets = io.sockets.adapter.rooms.get(room);
     if(sockets) {
         for (const socketId of sockets) {
             const socket = io.sockets.sockets.get(socketId);
             if(socket) {
-                const cleanState = JSON.parse(JSON.stringify(game)); // Deep copy
+                // On exclut endingTimer pour éviter le bug JSON
+                const { endingTimer, ...safeGameData } = game;
+                const cleanState = JSON.parse(JSON.stringify(safeGameData)); 
                 
-                // Masquer les cartes des adversaires et mes cartes inconnues
                 cleanState.players.forEach(p => {
                     if (game.state !== 'ENDED') {
                         p.hand = p.hand.map((card, index) => {
-                            // Si c'est moi et que je connais la carte : ok
                             if (p.id === socketId && p.knownCards.includes(index)) return card;
-                            // Si la carte a été échangée et rendue visible (règle spéciale), on pourrait gérer ici
-                            // Pour simplifier : on cache tout ce qui n'est pas "known"
                             return { suit: '', value: '', back: true }; 
                         });
                     }
                 });
                 
-                // La pioche est cachée
                 cleanState.deckCount = game.deck.length;
                 delete cleanState.deck;
 
@@ -607,32 +605,23 @@ function handlePlayerLeave(room, socketId) {
     if (playerIndex === -1) return;
 
     const player = game.players[playerIndex];
-    const handToCheck = player.hand; // On sauvegarde sa main
+    const handToCheck = player.hand; 
 
-    // 1. On retire le joueur
     game.players.splice(playerIndex, 1);
 
-    // 2. Si la salle est vide, on supprime tout et on arrête
     if (game.players.length === 0) {
-        console.log(`Salle ${room} vide, suppression.`);
         delete games[room];
         return;
     }
 
-    // 3. GESTION DU CHEF
-    // Si le joueur qui part était le chef, on passe le relais au suivant (index 0)
     if (game.leaderId === socketId) {
-        game.leaderId = game.players[0].id; // Le nouveau premier est le nouveau chef
+        game.leaderId = game.players[0].id;
         io.to(room).emit('gameMessage', `👑 ${game.players[0].name} est maintenant le Chef de la salle !`);
     }
 
-    // 4. GESTION DE LA PARTIE EN COURS
     if (game.state === 'PLAYING') {
-        
-        // --- CAS CRITIQUE : IL NE RESTE QU'UN SEUL JOUEUR ---
         if (game.players.length < 2) {
-            game.state = 'ENDED'; // On force la fin
-            // Reset des variables
+            game.state = 'ENDED'; 
             game.dutchCaller = null;
             game.lastRound = false;
             game.actionState = null;
@@ -641,22 +630,15 @@ function handlePlayerLeave(room, socketId) {
             game.drawnCard = null;
             game.lastPlayerId = null;
 
-            io.to(room).emit('gameMessage', `🚫 ${player.name} est parti. Partie annulée (Il faut être 2 minimum) !`);
-            
-            // On met à jour le plateau pour afficher l'écran de fin
+            io.to(room).emit('gameMessage', `🚫 ${player.name} est parti. Partie annulée.`);
             broadcastGameState(room);
-            
-            // IMPORTANT : On met à jour le lobby pour que le survivant (Chef) voie le bouton Rejouer
             io.to(room).emit('updateLobby', { 
                 players: game.players.map(p => p.name), 
                 leaderId: game.leaderId 
             });
-            return; // On arrête là
+            return; 
         }
-        // ----------------------------------------------------
 
-        // --- SINON LE JEU CONTINUE ---
-        // On remet les cartes du joueur dans la défausse
         if (handToCheck.length > 0) {
             const topCard = game.discardPile.pop();
             game.discardPile.push(...handToCheck);
@@ -664,15 +646,12 @@ function handlePlayerLeave(room, socketId) {
             game.discardPile.push(topCard);
         }
 
-        // Gestion de l'index du tour
         if (playerIndex < game.currentPlayerIndex) {
             game.currentPlayerIndex--;
         } else if (playerIndex === game.currentPlayerIndex) {
-            // Si c'était à lui de jouer
             if (game.currentPlayerIndex >= game.players.length) {
                 game.currentPlayerIndex = 0;
             }
-            // Reset du tour pour le suivant
             game.drawnCard = null;
             game.drawnSource = null;
             game.actionState = null;
@@ -680,25 +659,27 @@ function handlePlayerLeave(room, socketId) {
             game.pendingDutch = false;
         }
 
-        // Nettoyage Dutch/Buzzer
         if (game.dutchCaller === socketId) {
             game.dutchCaller = null;
             game.lastRound = false;
-            io.to(room).emit('gameMessage', "Le 'Dutcheur' est parti ! Le dernier tour est annulé.");
         }
         if (game.lastPlayerId === socketId) game.lastPlayerId = null;
 
         broadcastGameState(room);
     }
 
-    // 5. UPDATE FINAL DU LOBBY (CORRECTION ICI)
-    // On envoie bien l'objet { players, leaderId } et pas juste la liste !
     io.to(room).emit('updateLobby', { 
         players: game.players.map(p => p.name), 
         leaderId: game.leaderId 
     });
     
     io.to(room).emit('gameMessage', `🚪 ${player.name} a quitté la partie.`);
+}
+
+function broadcastWithDelay(room, delay) {
+    setTimeout(() => {
+        broadcastGameState(room);
+    }, delay);
 }
 
 const PORT = process.env.PORT || 3000;

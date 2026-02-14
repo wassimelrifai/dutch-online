@@ -37,8 +37,6 @@
             user-select: none;
             -webkit-tap-highlight-color: transparent;
             color: #eee;
-            
-            /* Texture Tapis de Jeu */
             background-color: var(--felt-bg);
             background-image: 
                 radial-gradient(circle at center, transparent 0%, #000 120%),
@@ -55,14 +53,6 @@
             70% { box-shadow: 0 0 0 10px rgba(212, 175, 55, 0); }
             100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
         }
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-4px); }
-        }
-        @keyframes shine {
-            0% { background-position: -100% 50%; }
-            100% { background-position: 200% 50%; }
-        }
 
         /* --- 3. UI COMPONENTS (GLASSMORPHISM) --- */
         .glass-panel {
@@ -74,7 +64,6 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        /* Boutons Style "Jeton" ou "Lingot" */
         button {
             font-family: 'Cinzel', serif;
             font-weight: 700;
@@ -92,24 +81,11 @@
         
         button:active { transform: scale(0.96); }
 
-        .btn-primary { 
-            background: linear-gradient(135deg, #d4af37, #aa8926); 
-            color: #1a1a1a; 
-            border: 1px solid #ffeebb;
-        }
+        .btn-primary { background: linear-gradient(135deg, #d4af37, #aa8926); color: #1a1a1a; border: 1px solid #ffeebb; }
         .btn-primary:hover { box-shadow: 0 0 15px var(--gold-primary); filter: brightness(1.1); }
-
-        .btn-dutch { 
-            background: linear-gradient(135deg, #e74c3c, #c0392b); 
-            color: white; 
-            font-size: 1.1em;
-            border: 1px solid #ff7b7b;
-            animation: pulse-gold 2s infinite;
-        }
-        
+        .btn-dutch { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; font-size: 1.1em; border: 1px solid #ff7b7b; animation: pulse-gold 2s infinite; }
         .btn-confirm { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; }
         .btn-cancel { background: rgba(255,255,255,0.1); color: #ddd; border: 1px solid rgba(255,255,255,0.3); }
-        .btn-cancel:hover { background: rgba(255,255,255,0.2); color: white; }
 
         /* --- 4. LOGIN SCREEN --- */
         #login {
@@ -120,21 +96,8 @@
         }
         #login.active { display: flex; }
         
-        .login-card {
-            padding: 50px 40px; 
-            width: 90%; max-width: 420px; 
-            text-align: center;
-            border: 1px solid var(--gold-primary);
-        }
-        .login-card h1 {
-            font-family: 'Cinzel', serif; font-size: 3.5em; color: var(--gold-primary);
-            margin: 0 0 10px 0;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
-            background: linear-gradient(to right, #bf953f, #fcf6ba, #bf953f);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+        .login-card { padding: 50px 40px; width: 90%; max-width: 420px; text-align: center; border: 1px solid var(--gold-primary); }
+        .login-card h1 { font-family: 'Cinzel', serif; font-size: 3.5em; color: var(--gold-primary); margin: 0 0 10px 0; }
         .subtitle { font-style: italic; opacity: 0.7; margin-bottom: 30px; font-family: 'Playfair Display', serif; }
 
         .login-input {
@@ -142,20 +105,15 @@
             border-radius: 8px; border: 1px solid var(--glass-border);
             background: rgba(0,0,0,0.3); color: var(--gold-primary);
             font-size: 1.1em; text-align: center; font-family: 'Cinzel', serif;
-            transition: 0.3s;
         }
-        .login-input:focus { outline: none; border-color: var(--gold-primary); background: rgba(0,0,0,0.5); }
-        .login-input::placeholder { color: rgba(255,255,255,0.3); font-family: 'Roboto', sans-serif; }
 
         /* --- 5. GAME LAYOUT --- */
         #game-ui {
             display: none; height: 100vh; flex-direction: column;
-            justify-content: space-between; padding: 10px;
-            position: relative;
+            justify-content: space-between; padding: 10px; position: relative;
         }
         #game-ui.active { display: flex; }
 
-        /* Opponents */
         #opponents-container {
             display: flex; justify-content: center; flex-wrap: wrap; gap: 15px;
             padding-top: 15px; min-height: 140px;
@@ -163,236 +121,129 @@
         
         .player-area {
             position: relative; padding: 10px 15px; border-radius: 12px;
-            background: rgba(0,0,0,0.3); border: 1px solid transparent;
-            transition: all 0.3s; text-align: center;
+            background: rgba(0,0,0,0.3); text-align: center;
         }
-        .player-area strong { 
-            display: block; font-size: 0.85em; margin-bottom: 6px; 
-            color: #aaa; font-family: 'Cinzel', serif; letter-spacing: 1px;
-        }
+        .player-area strong { display: block; font-size: 0.85em; margin-bottom: 6px; color: #aaa; font-family: 'Cinzel', serif; }
         
-        /* Active Turn Highlight */
         .player-area.active-turn {
-            background: rgba(212, 175, 55, 0.15);
-            border: 1px solid var(--gold-primary);
+            background: rgba(212, 175, 55, 0.15); border: 1px solid var(--gold-primary);
             box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
         }
-        .player-area.active-turn strong { color: var(--gold-primary); text-shadow: 0 0 5px var(--gold-primary); }
+        .player-area.active-turn strong { color: var(--gold-primary); }
 
-        /* Table Center */
-        .table-center {
-            flex: 1; display: flex; justify-content: center; align-items: center; gap: 40px;
-            position: relative;
-        }
+        .table-center { flex: 1; display: flex; justify-content: center; align-items: center; gap: 40px; position: relative; }
         
-        /* Zones de Pioche/Défausse avec placeholders visuels */
         .pile-zone {
             position: relative; width: var(--card-w); height: var(--card-h);
-            border-radius: var(--radius-card);
-            border: 2px dashed rgba(255,255,255,0.1);
+            border-radius: var(--radius-card); border: 2px dashed rgba(255,255,255,0.1);
             display: flex; justify-content: center; align-items: center;
         }
-.pile-zone::after {
-            content: attr(data-label);
-            position: absolute; 
-            color: rgba(255,255,255,0.15);
-            font-weight: bold; font-size: 0.8em; letter-spacing: 2px;
-            
-            /* --- LA CORRECTION --- */
-            pointer-events: none; /* La souris traverse le texte */
-            z-index: 0;           /* On s'assure que le texte reste au fond */
+        .pile-zone::after {
+            content: attr(data-label); position: absolute; 
+            color: rgba(255,255,255,0.15); font-weight: bold; font-size: 0.8em;
+            pointer-events: none; z-index: 0;
         }
 
         .pile { position: absolute; top: 0; left: 0; cursor: pointer; transition: transform 0.2s; }
         .pile:hover { transform: translateY(-5px); }
 
-        /* Actions Bar */
         .actions-bar {
             position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
             display: flex; gap: 15px; align-items: center; justify-content: center;
             padding: 15px 30px; z-index: 500; min-width: 320px;
         }
 
-/* My Area - DESIGN REVISITÉ */
         #my-player-area {
-            align-self: center; 
-            margin-bottom: 170px; 
-            padding: 20px 40px;
-            
-            /* État par défaut (Pas mon tour) : Style "Dark Glass" */
-            background: rgba(10, 20, 15, 0.6); /* Très sombre et transparent */
-            backdrop-filter: blur(8px);        /* Effet de flou derrière */
-            -webkit-backdrop-filter: blur(8px);
-            
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 20px; /* Bords plus arrondis */
-            
-            width: 95%; max-width: 650px;
-            position: relative; 
-            z-index: 10;
-            
-            /* Transition fluide pour l'effet d'allumage */
-            transition: all 0.5s ease-out;
+            align-self: center; margin-bottom: 170px; padding: 20px 40px;
+            background: rgba(10, 20, 15, 0.6); backdrop-filter: blur(8px);
+            border-radius: 20px; width: 95%; max-width: 650px;
+            position: relative; z-index: 10; transition: all 0.5s ease-out;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        /* Quand c'est MON TOUR : Lumière et Or */
         #my-player-area.active-turn {
             background: linear-gradient(to top, rgba(212, 175, 55, 0.15), rgba(0,0,0,0.4));
-            border-bottom: 2px solid var(--gold-primary);
-            border-top: 1px solid var(--gold-primary);
-            box-shadow: 0 0 40px rgba(212, 175, 55, 0.15);
-            transform: scale(1.02); /* Légère mise en avant */
+            border: 1px solid var(--gold-primary); box-shadow: 0 0 40px rgba(212, 175, 55, 0.15);
+            transform: scale(1.02);
         }
 
-        /* Effet sur les cartes dans ma main */
-        #my-player-area .card {
-            transition: all 0.4s ease;
-            filter: brightness(0.7) grayscale(0.2); /* Un peu sombre par défaut */
-            transform: translateY(0);
-        }
-
-        /* Quand c'est MON TOUR, les cartes s'éclairent */
-        #my-player-area.active-turn .card {
-            filter: brightness(1) grayscale(0); /* Pleine lumière */
-            cursor: pointer;
-        }
-
-        /* Hover sur les cartes (seulement si c'est mon tour ou mémorisation) */
-        #my-player-area.active-turn .card:hover, 
-        #my-player-area .card.reveal-mode { 
-            transform: translateY(-15px) scale(1.05); 
-            filter: brightness(1.1);
-        }
-
-        #my-player-area h3 {
-            margin: 0; 
-            font-family: 'Cinzel', serif; 
-            color: rgba(255,255,255,0.4); /* Gris par défaut */
-            transition: color 0.3s;
-            letter-spacing: 2px;
-        }
-
-        #my-player-area.active-turn h3 {
-            color: var(--gold-primary); /* Doré quand c'est le tour */
-            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
-        }
+        #my-player-area .card { transition: all 0.4s ease; filter: brightness(0.7) grayscale(0.2); }
+        #my-player-area.active-turn .card { filter: brightness(1) grayscale(0); cursor: pointer; }
+        #my-player-area.active-turn .card:hover, #my-player-area .card.reveal-mode { transform: translateY(-15px) scale(1.05); filter: brightness(1.1); }
+        #my-player-area h3 { margin: 0; font-family: 'Cinzel', serif; color: rgba(255,255,255,0.4); }
+        #my-player-area.active-turn h3 { color: var(--gold-primary); text-shadow: 0 0 10px rgba(212, 175, 55, 0.5); }
         
-        /* --- 6. CARD DESIGN --- */
-        .hand {
-            display: flex; justify-content: center; gap: 12px; margin: 0 auto;
-            perspective: 1000px;
-        }
+        .hand { display: flex; justify-content: center; gap: 12px; margin: 0 auto; perspective: 1000px; }
         
         .card {
             width: var(--card-w); height: var(--card-h);
-            border-radius: var(--radius-card);
-            background-color: var(--card-white);
-            position: relative;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            box-shadow: 2px 4px 8px rgba(0,0,0,0.5);
-            cursor: pointer;
-            font-family: 'Playfair Display', serif;
-            font-weight: bold;
-            font-size: 1.8em; line-height: 1;
+            border-radius: var(--radius-card); background-color: var(--card-white);
+            position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            box-shadow: 2px 4px 8px rgba(0,0,0,0.5); cursor: pointer;
+            font-family: 'Playfair Display', serif; font-weight: bold; font-size: 1.8em; line-height: 1;
             transition: transform 0.2s, box-shadow 0.2s, top 0.2s;
-            animation: deal 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             transform-style: preserve-3d;
         }
         
-        /* Texture papier subtile */
         .card:not(.back)::before {
-            content: ""; position: absolute; inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
-            opacity: 0.5; pointer-events: none; border-radius: var(--radius-card);
-        }
-
-        .card:hover { 
-            transform: translateY(-12px) scale(1.05); 
-            z-index: 10; 
-            box-shadow: 0 15px 30px rgba(0,0,0,0.4); 
+            content: ""; position: absolute; inset: 0; opacity: 0.5; pointer-events: none; border-radius: var(--radius-card);
         }
 
         .card.red { color: var(--card-red); }
         .card.black { color: var(--card-black); }
         
-        /* Coins (Suits) */
-        .card .corner-suit {
-            position: absolute; font-size: 0.4em; opacity: 1; font-family: 'Roboto', sans-serif;
-            display: flex; flex-direction: column; align-items: center; line-height: 0.9;
-        }
+        .card .corner-suit { position: absolute; font-size: 0.4em; font-family: 'Roboto', sans-serif; display: flex; flex-direction: column; align-items: center; line-height: 0.9; }
         .card .top-left { top: 6px; left: 6px; }
         .card .bottom-right { bottom: 6px; right: 6px; transform: rotate(180deg); }
 
-        /* Design Dos de Carte (Géométrique) */
         .card.back {
             background-color: #3e5f8a;
-            background-image: 
-                radial-gradient(white 15%, transparent 16%),
-                radial-gradient(white 15%, transparent 16%);
-            background-size: 20px 20px;
-            background-position: 0 0, 10px 10px;
-            border: 4px solid white;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+            background-image: radial-gradient(white 15%, transparent 16%), radial-gradient(white 15%, transparent 16%);
+            background-size: 20px 20px; background-position: 0 0, 10px 10px;
+            border: 4px solid white; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
         }
-        /* Motif central du dos pour faire plus classe */
-        .card.back::after {
-            content: "♦";
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 2em; color: rgba(255,255,255,0.2);
-        }
+        .card.back::after { content: "♦"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2em; color: rgba(255,255,255,0.2); }
         .card.back div, .card.back span { display: none; }
 
-        /* Highlight effects */
-        .card.reveal-mode {
-            border: 2px solid var(--gold-primary);
-            box-shadow: 0 0 25px var(--gold-primary);
-            animation: pulse-gold 1s infinite;
-        }
+        .card.reveal-mode { border: 2px solid var(--gold-primary); box-shadow: 0 0 25px var(--gold-primary); animation: pulse-gold 1s infinite; }
 
-        /* --- 7. LOGS & NOTIFICATIONS --- */
         #message-log {
             position: fixed; top: 20px; right: 20px; width: 320px;
-            display: flex; flex-direction: column; align-items: flex-end;
-            pointer-events: none; z-index: 1000;
+            display: flex; flex-direction: column; align-items: flex-end; pointer-events: none; z-index: 1000;
         }
         .log-entry {
-            background: rgba(20, 20, 20, 0.85); 
-            color: #fff;
-            padding: 10px 15px; margin-bottom: 8px; border-radius: 8px;
-            font-size: 0.9em; border-left: 4px solid var(--gold-primary);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            animation: deal 0.3s forwards;
-            backdrop-filter: blur(4px);
-            font-family: 'Roboto', sans-serif;
+            background: rgba(20, 20, 20, 0.85); color: #fff; padding: 10px 15px; margin-bottom: 8px; border-radius: 8px;
+            font-size: 0.9em; border-left: 4px solid var(--gold-primary); box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            animation: deal 0.3s forwards; backdrop-filter: blur(4px); font-family: 'Roboto', sans-serif;
         }
 
-        /* --- 8. RULES MODAL --- */
         #rules-modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 3000;
-            align-items: center; justify-content: center;
-            backdrop-filter: blur(5px);
+            background: rgba(0,0,0,0.85); z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(5px);
         }
         .rules-content {
             background: #fff; color: #222; padding: 40px; border-radius: 12px;
             max-width: 550px; max-height: 85vh; overflow-y: auto; text-align: left;
-            border: 4px solid var(--gold-primary);
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            border: 4px solid var(--gold-primary); box-shadow: 0 0 50px rgba(0,0,0,0.8);
         }
         .rules-content h2 { margin-top: 0; color: #8b0000; font-family: 'Cinzel', serif; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .rules-content ul { line-height: 1.6; }
-        .rules-content strong { color: #8b0000; }
 
-        /* Responsive */
-        @media (max-width: 600px) {
-            :root { --card-w: 55px; --card-h: 80px; }
-            .table-center { gap: 15px; }
-            .player-area { padding: 5px; margin: 2px; }
-            .pile-zone { border-width: 1px; }
-            .pile-zone::after { font-size: 0.6em; }
-            .login-card h1 { font-size: 2.5em; }
+        /* --- ANIMATIONS VOLANTES --- */
+        .flying-card {
+            position: fixed; z-index: 9999;
+            width: var(--card-w); height: var(--card-h);
+            border-radius: var(--radius-card); background-size: cover;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5); pointer-events: none;
+            transform-origin: center center;
+        }
+
+        .flip-in {
+            animation: flip-in-anim 0.4s ease-out forwards;
+        }
+
+        @keyframes flip-in-anim {
+            from { transform: rotateY(90deg); }
+            to { transform: rotateY(0deg); }
         }
     </style>
 </head>
@@ -427,13 +278,13 @@
 
         <div class="table-center">
             
-            <div class="pile-zone" data-label="PIOCHE">
+            <div id="zone-pioche" class="pile-zone" data-label="PIOCHE">
                 <div class="pile" onclick="drawCard('deck')">
                     <div class="card back"></div>
                 </div>
             </div>
             
-            <div class="pile-zone" data-label="DÉFAUSSE">
+            <div id="zone-defausse" class="pile-zone" data-label="DÉFAUSSE">
                 <div class="pile" onclick="drawCard('discard')">
                     <div id="discard-pile-card" class="card" style="opacity:0; pointer-events:none;"></div>
                 </div>
@@ -462,26 +313,39 @@
 
     <div id="rules-modal" onclick="this.style.display='none'">
         <div class="rules-content" onclick="event.stopPropagation()">
-            <h2>Règles Officielles</h2>
-            <p><strong>Objectif :</strong> Terminer la manche avec le score le plus bas.</p>
-            <ul>
-                <li><strong>Début :</strong> Mémorisez 2 de vos 4 cartes face cachée.</li>
-                <li><strong>Tour de jeu :</strong> 
-                    <ul>
-                        <li>Piochez une carte (du paquet ou de la défausse).</li>
-                        <li>Échangez-la avec l'une de vos cartes (face cachée).</li>
-                        <li>Ou jetez-la (si elle vient du paquet).</li>
-                    </ul>
-                </li>
-                <li><strong>Pouvoirs (si carte jetée) :</strong>
-                    <ul>
-                        <li><strong>Valet (J) :</strong> Échangez une de vos cartes avec un adversaire (à l'aveugle).</li>
-                        <li><strong>Dame (Q) :</strong> Regardez secrètement une de vos cartes.</li>
-                    </ul>
-                </li>
-                <li><strong>Snap (À la volée) :</strong> Si une carte jouée est identique à une de vos cartes, jetez la vôtre rapidement !</li>
-                <li><strong>DUTCH :</strong> Si vous pensez avoir le meilleur score, annoncez "DUTCH". Un dernier tour commence.</li>
+            <h2 style="text-align:center; color:var(--gold-primary); margin-bottom:20px;">📜 Règles Officielles</h2>
+            
+            <p><strong>Objectif :</strong> Terminer la manche avec le score le plus bas possible.</p>
+            
+            <h3 style="border-bottom:1px solid #ddd; padding-bottom:5px;">🃏 Valeur des Cartes</h3>
+            <ul style="list-style:none; padding-left:0;">
+                <li>🤡 <strong>Joker :</strong> -3 points (La meilleure !)</li>
+                <li>👑 <strong>Roi Rouge (♥/♦) :</strong> 0 point</li>
+                <li>🅰️ <strong>As :</strong> 1 point</li>
+                <li>🔢 <strong>2 à 10 :</strong> Valeur du chiffre</li>
+                <li>🤴 <strong>Figures (J, Q, K Noir) :</strong> 13 points</li>
             </ul>
+
+            <h3 style="border-bottom:1px solid #ddd; padding-bottom:5px;">⚔️ Déroulement</h3>
+            <p>Au début, mémorisez <strong>2</strong> de vos 4 cartes. À chaque tour :</p>
+            <ol>
+                <li>Piochez une carte.</li>
+                <li>Échangez-la avec l'une de vos cartes (face cachée) OU jetez-la.</li>
+                <li>Si la carte <strong>jetée</strong> est un Valet ou une Dame, un <strong>Pouvoir</strong> s'active.</li>
+            </ol>
+
+            <h3 style="border-bottom:1px solid #ddd; padding-bottom:5px;">✨ Pouvoirs & Actions</h3>
+            <ul>
+                <li>👸 <strong>Dame (Q) - Espion :</strong> Regardez secrètement l'une de vos cartes.</li>
+                <li>🤴 <strong>Valet (J) - Échange :</strong> Échangez à l'aveugle une de vos cartes contre celle d'un adversaire.</li>
+                <li>⚡ <strong>SNAP (À la volée) :</strong> Même si ce n'est pas votre tour, si la carte posée sur la défausse est <strong>identique</strong> à une carte de votre main, soyez le plus rapide pour la jeter !</li>
+                <li>🛡️ <strong>Contre-Attaque :</strong> Si un joueur pose un Valet ou une Dame sur le vôtre (Snap), cela <strong>annule votre pouvoir</strong> !</li>
+            </ul>
+
+            <h3 style="border-bottom:1px solid #ddd; padding-bottom:5px;">🏁 Fin de Partie</h3>
+            <p>Si vous pensez avoir le score le plus bas, annoncez <strong>"DUTCH"</strong>. Cela déclenche le <strong>Dernier Tour</strong>.</p>
+            <p><em>Note : Si vous n'avez plus de cartes en main, le Dutch est <strong>Automatique</strong>.</em></p>
+
             <div style="text-align:center; margin-top:30px;">
                 <button class="btn-primary" onclick="document.getElementById('rules-modal').style.display='none'">J'ai compris</button>
             </div>
@@ -490,7 +354,6 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // --- LOGIQUE CLIENT INCHANGÉE (Design Only) ---
         const socket = io();
         let myId = null;
         let gameState = null;
@@ -510,7 +373,6 @@
             div.className = 'log-entry'; 
             div.innerHTML = msg; 
             document.getElementById('message-log').appendChild(div);
-            // Suppression auto
             setTimeout(() => {
                 div.style.opacity = '0';
                 div.style.transform = 'translateX(20px)';
@@ -539,7 +401,6 @@
             });
 
             socket.on('updateLobby', (data) => {
-                // Compatibilité : data peut être l'objet {players, leaderId} ou juste le tableau (vieux code)
                 const playersList = data.players || data; 
                 const leaderId = data.leaderId;
                 const mySocketId = socket.id;
@@ -555,17 +416,14 @@
                 }
 
                 if(playersList.length >= 2) {
-                    // --- MODIFICATION : SEUL LE CHEF VOIT LE BOUTON ---
                     if (leaderId === mySocketId) {
                         if(!document.getElementById('btn-start-game')) {
                             div.innerHTML += `<button id="btn-start-game" onclick="socket.emit('startGame', '${document.getElementById('room').value}')">👑 LANCER LA PARTIE</button>`;
                         }
                     } else {
-                        // Si je ne suis pas chef, j'affiche un message d'attente
                         if(!document.getElementById('msg-waiting')) {
                             div.innerHTML += `<div id="msg-waiting" style="margin-top:10px; opacity:0.8;">En attente du chef de salle...</div>`;
                         }
-                        // On s'assure de supprimer le bouton s'il existait (cas où le chef change)
                         const btn = document.getElementById('btn-start-game');
                         if(btn) btn.remove();
                     }
@@ -592,25 +450,73 @@
             renderActions();
         });
 
-        // Résultat du "Peek" (Dame)
+        // Résultat du "Peek" (Dame) avec Animation Flip
         socket.on('peekResult', ({ card, index }) => {
-            tempRevealedIndex = index;
-            tempRevealedCardData = card;
-            
-            log("👁️ Vous observez votre carte (3s)...");
-            renderTable();
+            const handDiv = document.getElementById('my-hand');
+            const cardEl = handDiv.children[index];
 
+            // ÉTAPE 1 : RETOURNER LA CARTE (Dos -> Tranche)
+            if(cardEl) {
+                cardEl.style.transition = "transform 0.25s ease-in";
+                cardEl.style.transform = "rotateY(90deg)";
+            }
+
+            log("👁️ Vous observez votre carte (3s)...");
+
+            // Attendre qu'elle soit invisible (sur la tranche)
             setTimeout(() => {
-                tempRevealedIndex = null;
-                tempRevealedCardData = null;
+                // ÉTAPE 2 : AFFICHER LA FACE
+                tempRevealedIndex = index;
+                tempRevealedCardData = card;
                 renderTable(); 
-                log("La carte est de nouveau cachée.");
-            }, 3000);
+
+                // Animation d'entrée (Tranche -> Face)
+                const revealedEl = document.getElementById('my-hand').children[index];
+                if(revealedEl) revealedEl.classList.add('flip-in');
+
+                // ÉTAPE 3 : ATTENDRE 3 SECONDES PUIS CACHER
+                setTimeout(() => {
+                    // Retourner à nouveau (Face -> Tranche)
+                    const elToHide = document.getElementById('my-hand').children[index];
+                    if(elToHide) {
+                        elToHide.style.transition = "transform 0.25s ease-in";
+                        elToHide.style.transform = "rotateY(90deg)";
+                        elToHide.classList.remove('flip-in');
+                    }
+
+                    // Une fois sur la tranche, remettre le dos
+                    setTimeout(() => {
+                        tempRevealedIndex = null;
+                        tempRevealedCardData = null;
+                        renderTable(); 
+
+                        // Animation finale (Tranche -> Dos)
+                        const hiddenEl = document.getElementById('my-hand').children[index];
+                        if(hiddenEl) hiddenEl.classList.add('flip-in');
+                        
+                        log("La carte est de nouveau cachée.");
+                    }, 250);
+
+                }, 3000); // Durée de la vision
+            }, 250); // Durée du premier flip
         });
 
-        // Rendu HTML d'une carte (Mise à jour Design)
+        // RÉCEPTION IMMÉDIATE DE MA PIOCHE
+        socket.on('privateCardDrawn', (card) => {
+            const drawnArea = document.getElementById('drawn-card-area');
+            drawnArea.style.display = 'flex';
+            
+            let drawnHtml = renderCardHTML(card, "", true);
+            drawnHtml = drawnHtml.replace('class="card', 'id="drawn-card-display" class="card');
+            
+            const existingEl = document.getElementById('drawn-card-display');
+            if (existingEl) existingEl.outerHTML = drawnHtml;
+            else drawnArea.innerHTML = drawnHtml + `<div style="margin-top:10px;"><button class="btn-cancel" onclick="playAction('discard')">Jeter</button></div>`;
+
+            gameState.drawnCard = card; 
+        });
+
         function renderCardHTML(card, onClickStr = "", isFaceUp = false, highlight = false) {
-            // Placeholder vide
             if(!card) return `<div class="card" style="opacity:0; pointer-events:none;"></div>`;
             
             const shouldBeHidden = card.back || (!isFaceUp && !card.back);
@@ -618,13 +524,9 @@
             if(highlight) classes += " reveal-mode";
 
             if (shouldBeHidden) {
-                // Dos de carte
                 return `<div class="${classes} back" onclick="${onClickStr}"></div>`;
             } else {
-                // Face visible
                 const colorClass = (card.suit === '♥' || card.suit === '♦') ? 'red' : 'black';
-                
-                // Structure HTML enrichie pour les coins (Corners)
                 return `
                 <div class="${classes} ${colorClass}" data-suit="${card.suit}" onclick="${onClickStr}">
                     <span class="corner-suit top-left">${card.value}<br>${card.suit}</span>
@@ -638,16 +540,14 @@
             const myIdx = gameState.players.findIndex(p => p.id === myId);
             const me = gameState.players[myIdx];
 
-            // 1. Défausse (La carte du dessus)
+            // 1. Défausse
             const topDiscard = gameState.discardPile[gameState.discardPile.length - 1];
-            // On remplace le HTML du placeholder dans le DOM
             let discardHtml = renderCardHTML(topDiscard, "", true);
-            // On injecte l'ID pour que le CSS fonctionne si besoin, mais on cible surtout le parent
             discardHtml = discardHtml.replace('class="card', 'id="discard-pile-card" class="card');             
             const discardEl = document.getElementById('discard-pile-card');
             if (discardEl) discardEl.outerHTML = discardHtml;
 
-            // 2. Carte piochée (Zone de transition)
+            // 2. Carte piochée
             const drawnArea = document.getElementById('drawn-card-area');
             const isMyTurn = gameState.currentPlayerIndex === myIdx;
             
@@ -692,12 +592,11 @@
             }).join('');
             myHandDiv.innerHTML = handHtml;
 
-            // Style tour actif
             const myArea = document.getElementById('my-player-area');
             if (isMyTurn) myArea.classList.add('active-turn'); else myArea.classList.remove('active-turn');
             document.getElementById('my-score').innerText = (gameState.state === 'ENDED') ? `Score Final: ${me.score}` : '';
 
-// 4. ADVERSAIRES
+            // 4. ADVERSAIRES
             const oppContainer = document.getElementById('opponents-container');
             oppContainer.innerHTML = '';
             gameState.players.forEach((p, idx) => {
@@ -709,19 +608,13 @@
                          action = `resolvePower('SWAP', '${p.id}', ${cIdx})`;
                     }
                     const isVisible = (gameState.state === 'ENDED');
-                    
                     let h = renderCardHTML(c, action, isVisible);
-                    
-                    // --- CORRECTION ICI ---
-                    // On injecte le style avant la classe pour ne pas casser le HTML
-                    // Ancienne ligne buggée : return h.replace('class="card', 'class="card" style="..."');
                     return h.replace('class="card', 'style="transform:scale(0.7); margin:-10px; box-shadow:none;" class="card'); 
                 }).join('');
 
                 const isTurn = (idx === gameState.currentPlayerIndex) ? 'active-turn' : '';
                 oppContainer.innerHTML += `
-                    <div class="player-area ${isTurn}">
-                        <strong>${p.name} ${p.score !== undefined ? ' • '+p.score+' pts' : ''}</strong>
+                    <div class="player-area ${isTurn}" data-id="${p.id}"> <strong>${p.name} ${p.score !== undefined ? ' • '+p.score+' pts' : ''}</strong>
                         <div class="hand" style="transform: scale(0.8); grid-template-columns: repeat(2, 1fr); justify-content:center; gap:5px;">${oppHandHtml}</div>
                     </div>`;
             });
@@ -732,10 +625,9 @@
             bar.innerHTML = ''; 
             const room = document.getElementById('room').value;
 
-            // --- 1. FIN DE PARTIE : BOUTON REJOUER ---
+            // --- 1. FIN DE PARTIE ---
             if (gameState.state === 'ENDED') {
                 const isLeader = (gameState.leaderId === myId);
-                
                 let content = `
                     <div style="text-align:center; animation: fadein 1s;">
                         <div style="margin-bottom:10px; font-weight:bold; color:#ffeb3b; font-size:1.2em;">
@@ -743,23 +635,16 @@
                         </div>`;
                 
                 if (isLeader) {
-                    content += `
-                        <button class="btn-confirm" onclick="socket.emit('restartGame', '${room}')">
-                            👑 REJOUER (Même salle)
-                        </button>`;
+                    content += `<button class="btn-confirm" onclick="socket.emit('restartGame', '${room}')">👑 REJOUER</button>`;
                 } else {
-                    content += `
-                        <div style="font-style:italic; opacity:0.8;">
-                            En attente du chef de salle pour rejouer...
-                        </div>`;
+                    content += `<div style="font-style:italic; opacity:0.8;">En attente du chef...</div>`;
                 }
-                
                 content += `</div>`;
                 bar.innerHTML = content;
-                return; // On s'arrête là
+                return;
             }
 
-            // --- DEBUT : MEMORISATION ---
+            // --- 2. DEBUT : MEMORISATION ---
             if (!memoryLocked && gameState.state === 'PLAYING') {
                 bar.innerHTML = `
                     <div style="text-align:center">
@@ -771,53 +656,85 @@
 
             const myIdx = gameState.players.findIndex(p => p.id === myId);
             const isMyTurn = gameState.currentPlayerIndex === myIdx;
-            const amILastPlayer = (gameState.lastPlayerId === myId);
-            const canBuzz = amILastPlayer && !gameState.drawnCard;
 
-            // --- BOUTON DUTCH ---
+            // --- 3. GESTION DES POUVOIRS ---
+            if (gameState.actionState && gameState.actionState.playerIdx === myIdx) {
+                if (gameState.actionState.type === 'PEEK') {
+                    bar.innerHTML += `<div style="color:var(--gold-shine); font-weight:bold; margin-right:10px;">👀 POUVOIR DAME: Cliquez sur une carte</div>`;
+                }
+                if (gameState.actionState.type === 'SWAP') {
+                    bar.innerHTML += `<div style="color:var(--gold-shine); font-weight:bold; margin-right:10px;">🔄 POUVOIR VALET: Échangez deux cartes</div>`;
+                }
+                bar.innerHTML += `<button class="btn-cancel" onclick="socket.emit('skipPower', '${room}')">PASSER</button>`;
+                return; 
+            }
+
+            // --- 4. BOUTON DUTCH ---
+            const amILastPlayer = (gameState.lastPlayerId === myId);
+            const canBuzz = amILastPlayer && !gameState.drawnCard && !gameState.actionState;
+
             if (!gameState.lastRound && (isMyTurn || canBuzz)) {
                 let btnText = "📢 DUTCH";
                 let btnStyle = ""; 
                 let btnAction = `socket.emit('callDutch', '${room}')`;
 
                 if (canBuzz && !isMyTurn) {
-                    btnText = "⚡ DUTCH ";
+                    btnText = "⚡ DUTCH";
                     btnStyle = "background: #e67e22; border-color:white;";
                 }
 
                 bar.innerHTML += `<button class="btn-dutch" style="margin-right:20px; ${btnStyle}" onclick="${btnAction}">${btnText}</button>`;
             }
 
-            // --- ACTIONS DE JEU ---
+            // --- 5. ACTIONS DE TOUR STANDARD ---
             if (isMyTurn) {
-                if (gameState.actionState && gameState.actionState.playerIdx === myIdx) {
-                    if (gameState.actionState.type === 'PEEK') {
-                        bar.innerHTML += `<div style="color:var(--gold-shine); font-weight:bold; margin-right:10px;">👀 POUVOIR DAME: Cliquez sur une de vos cartes</div>`;
-                    }
-                    if (gameState.actionState.type === 'SWAP') {
-                        bar.innerHTML += `<div style="color:var(--gold-shine); font-weight:bold; margin-right:10px;">🔄 POUVOIR VALET: Échangez vos cartes</div>`;
-                    }
-                    bar.innerHTML += `<button class="btn-cancel" onclick="socket.emit('skipPower', '${room}')">Passer le pouvoir</button>`;
-                    return; 
-                }
-
                 if (!gameState.drawnCard) {
                    bar.innerHTML += `<span style="opacity:0.9; font-weight:bold; color:var(--gold-primary);">À VOUS DE JOUER : PIOCHEZ</span>`;
                 } else {
                    bar.innerHTML += `<span style="opacity:0.9; font-weight:bold;">Quelle carte échanger ?</span>`;
                 }
-            }
-            
-            if (canBuzz && !isMyTurn) {
+            } else if (canBuzz) {
                  bar.innerHTML += `<span style="opacity:0.6; font-size:0.8em;">Tour adverse...</span>`;
             }
         }
 
-        // --- ACTIONS JS INCHANGEES ---
+        // --- ACTIONS JS ---
         function lockMemory() {
-            memoryLocked = true;
-            renderTable();
-            renderActions();
+            const handDiv = document.getElementById('my-hand');
+            // Au début, ce sont généralement les cartes 0 et 1 qui sont visibles
+            const cardsToFlip = [0, 1]; 
+            let animCount = 0;
+
+            // 1. On tourne les cartes visibles à 90° (tranche)
+            cardsToFlip.forEach(i => {
+                const el = handDiv.children[i];
+                if(el && !el.classList.contains('back')) {
+                    el.style.transition = "transform 0.3s ease-in";
+                    el.style.transform = "rotateY(90deg)";
+                    animCount++;
+                }
+            });
+
+            // Si aucune carte à retourner, on lance direct
+            if (animCount === 0) {
+                memoryLocked = true;
+                renderTable();
+                renderActions();
+                return;
+            }
+
+            // 2. On attend qu'elles soient sur la tranche pour changer les données
+            setTimeout(() => {
+                memoryLocked = true;
+                renderTable(); // Affiche les dos
+                renderActions();
+                
+                // 3. On finit l'animation (de 90° à 0°) sur les nouvelles cartes (dos)
+                cardsToFlip.forEach(i => {
+                    const el = document.getElementById('my-hand').children[i];
+                    if(el) el.classList.add('flip-in');
+                });
+            }, 300); // 300ms correspond à la transition CSS
         }
 
         function drawCard(source) {
@@ -836,7 +753,6 @@
         function storeSwapSource(index) {
             swapSourceIndex = index;
             log("👇 Sélectionnez la carte adverse à voler.");
-            // Visuel local
             const cards = document.querySelectorAll('#my-hand .card');
             cards.forEach(c => c.style.border = 'none');
             if(cards[index]) cards[index].style.border = "3px solid var(--gold-primary)";
@@ -857,12 +773,179 @@
                 socket.emit('leaveGame', room);
             }
         }
-
-        // Confirmation du serveur que je suis parti
         socket.on('leftGameSuccess', () => {
-            // On recharge la page pour revenir propre à l'écran de login
             window.location.reload();
         });
+
+        // --- GESTION DES ANIMATIONS VISUELLES ---
+        
+        socket.on('animate', (data) => performAnimation(data));
+
+        function getCardElement(playerId, cardIndex) {
+            if (playerId === myId) {
+                const handDiv = document.getElementById('my-hand');
+                return (handDiv && handDiv.children[cardIndex]) ? handDiv.children[cardIndex] : null;
+            } else {
+                const oppDivs = document.querySelectorAll('.player-area');
+                for (let div of oppDivs) {
+                    if (div.dataset.id === playerId) {
+                        const hand = div.querySelector('.hand');
+                        return (hand && hand.children[cardIndex]) ? hand.children[cardIndex] : null;
+                    }
+                }
+            }
+            return null;
+        }
+
+        // --- ANIMATION SIMPLE (1s) ---
+        // --- ANIMATION SIMPLE (0.8s) ---
+        function flyCardSimple(startElem, endElem, className = "back") {
+            if (!startElem || !endElem) return;
+            const startRect = startElem.getBoundingClientRect();
+            const endRect = endElem.getBoundingClientRect();
+            
+            // Si élément invisible, on annule
+            if (startRect.width === 0 || endRect.width === 0) return;
+
+            const flyer = document.createElement('div');
+            flyer.className = `flying-card card ${className}`;
+            
+            // CORRECTION BUG VISUEL : On ne copie le contenu QUE si ce n'est pas un dos de carte
+            if (!className.includes('back') && !startElem.classList.contains('back') && startElem.children.length > 0) {
+                flyer.innerHTML = startElem.innerHTML;
+                flyer.classList.remove('back');
+                if (startElem.classList.contains('red')) flyer.classList.add('red');
+                else flyer.classList.add('black');
+            }
+
+            document.body.appendChild(flyer);
+
+            const flyerW = 85; const flyerH = 120;
+            const startLeft = startRect.left + (startRect.width/2) - (flyerW/2);
+            const startTop = startRect.top + (startRect.height/2) - (flyerH/2);
+            const endLeft = endRect.left + (endRect.width/2) - (flyerW/2);
+            const endTop = endRect.top + (endRect.height/2) - (flyerH/2);
+
+            // Départ
+            flyer.style.left = `${startLeft}px`;
+            flyer.style.top = `${startTop}px`;
+            flyer.style.transition = 'all 0.8s ease-in-out'; // Vitesse 0.8s
+            
+            flyer.offsetHeight; // Force Reflow
+
+            // Arrivée
+            flyer.style.left = `${endLeft}px`;
+            flyer.style.top = `${endTop}px`;
+            flyer.style.transform = 'scale(1.1)'; 
+
+            setTimeout(() => flyer.remove(), 800); // Nettoyage 0.8s
+        }
+
+        // --- ANIMATION VALET COMPLEXE (3s) ---
+        function animateJackSwap(elemA, elemB) {
+            if (!elemA || !elemB) return;
+
+            const rectA = elemA.getBoundingClientRect();
+            const rectB = elemB.getBoundingClientRect();
+            const w = 85, h = 120; 
+
+            const createFlyer = (rect, className = "back") => {
+                const f = document.createElement('div');
+                f.className = 'flying-card card ' + className;
+                f.style.left = `${rect.left + (rect.width/2) - (w/2)}px`;
+                f.style.top = `${rect.top + (rect.height/2) - (h/2)}px`;
+                f.style.transition = 'all 1.5s ease-in-out'; 
+                document.body.appendChild(f);
+                return f;
+            };
+
+            const flyerA = createFlyer(rectA);
+            const flyerB = createFlyer(rectB);
+
+            // PHASE 1 : GROSSIR (0.75s)
+            setTimeout(() => {
+                flyerA.style.transition = 'transform 0.75s ease';
+                flyerB.style.transition = 'transform 0.75s ease';
+                
+                flyerA.style.transform = 'scale(1.3) rotate(-5deg)';
+                flyerB.style.transform = 'scale(1.3) rotate(5deg)';
+                flyerA.style.zIndex = 10000; 
+                flyerB.style.zIndex = 10000;
+            }, 20);
+
+            // PHASE 2 : GLISSER (1.5s)
+            setTimeout(() => {
+                flyerA.style.transition = 'all 1.5s ease-in-out';
+                flyerB.style.transition = 'all 1.5s ease-in-out';
+
+                flyerA.style.left = `${rectB.left + (rectB.width/2) - (w/2)}px`;
+                flyerA.style.top = `${rectB.top + (rectB.height/2) - (h/2)}px`;
+                
+                flyerB.style.left = `${rectA.left + (rectA.width/2) - (w/2)}px`;
+                flyerB.style.top = `${rectA.top + (rectA.height/2) - (h/2)}px`;
+
+            }, 750); 
+
+            // PHASE 3 : RETRECIR (0.75s)
+            setTimeout(() => {
+                flyerA.style.transition = 'transform 0.75s ease';
+                flyerB.style.transition = 'transform 0.75s ease';
+                
+                flyerA.style.transform = 'scale(1) rotate(0deg)';
+                flyerB.style.transform = 'scale(1) rotate(0deg)';
+            }, 2250); 
+
+            // FIN
+            setTimeout(() => {
+                flyerA.remove();
+                flyerB.remove();
+            }, 3000);
+        }
+
+        function performAnimation(data) {
+            const deck = document.getElementById('zone-pioche');
+            const discardZone = document.getElementById('zone-defausse');
+            const drawnDisplay = document.getElementById('drawn-card-display') || document.getElementById('drawn-card-area');
+
+            if (data.type === 'DRAW') {
+                let target;
+                if (data.playerId === myId) {
+                    target = document.getElementById('drawn-card-display') || document.getElementById('drawn-card-area');
+                } else {
+                    target = Array.from(document.querySelectorAll('.player-area'))
+                        .find(d => d.dataset.id === data.playerId);
+                }
+                flyCardSimple(deck, target);
+            }
+
+            else if (data.type === 'DISCARD_DRAWN') {
+                let start;
+                if (data.playerId === myId) {
+                     start = drawnDisplay;
+                } else {
+                     start = Array.from(document.querySelectorAll('.player-area'))
+                        .find(d => d.dataset.id === data.playerId);
+                }
+                flyCardSimple(start, discardZone);
+            }
+
+            else if (data.type === 'SWAP_SELF') {
+                const handCard = getCardElement(data.playerId, data.cardIndex);
+                flyCardSimple(handCard, discardZone);
+            }
+
+            else if (data.type === 'SNAP') {
+                const handCard = getCardElement(data.playerId, data.cardIndex);
+                flyCardSimple(handCard, discardZone);
+            }
+
+            else if (data.type === 'SWAP_PLAYERS') {
+                const cardA = getCardElement(data.fromId, data.fromIndex);
+                const cardB = getCardElement(data.toId, data.toIndex);
+                animateJackSwap(cardA, cardB);
+                log("🔀 Le Valet frappe ! Échange en cours...");
+            }
+        }
 
         socket.on('gameMessage', (msg) => log(msg));
         socket.on('error', (msg) => alert(msg));
