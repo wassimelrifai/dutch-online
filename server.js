@@ -110,7 +110,8 @@ io.on('connection', (socket) => {
             name: playerName,
             hand: [], 
             knownCards: [], 
-            score: 0
+            score: 0,
+            totalScore: 0
         });
 
         // Gestion du Chef
@@ -424,10 +425,12 @@ io.on('connection', (socket) => {
         
         game.currentPlayerIndex = starterIndex;
 
+        // 4. Redistribution des mains
         game.players.forEach(p => {
             p.hand = [game.deck.pop(), game.deck.pop(), game.deck.pop(), game.deck.pop()];
             p.knownCards = [0, 1]; 
-            p.score = 0; 
+            p.score = null; // On efface le score de la manche précédente
+            // p.totalScore reste intact !
         });
 
         const starterName = game.players[starterIndex].name;
@@ -556,11 +559,19 @@ function endGame(room) {
     }
     game.state = 'ENDED';
     
+    // Révéler toutes les cartes et calculer scores
     game.players.forEach(p => {
-        let score = 0;
-        p.hand.forEach(c => score += c.points);
-        p.score = score;
-        p.knownCards = p.hand.map((_, i) => i); 
+        let roundScore = 0;
+        p.hand.forEach(c => roundScore += c.points);
+        
+        // On sauvegarde le score de la manche (pour l'affichage immédiat)
+        p.score = roundScore;
+        
+        // On l'ajoute au total (Cumul)
+        if (!p.totalScore) p.totalScore = 0;
+        p.totalScore += roundScore;
+        
+        p.knownCards = p.hand.map((_, i) => i); // Tout révéler
     });
     
     broadcastGameState(room);

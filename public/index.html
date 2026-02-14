@@ -594,7 +594,14 @@
 
             const myArea = document.getElementById('my-player-area');
             if (isMyTurn) myArea.classList.add('active-turn'); else myArea.classList.remove('active-turn');
-            document.getElementById('my-score').innerText = (gameState.state === 'ENDED') ? `Score Final: ${me.score}` : '';
+            const myTotal = me.totalScore || 0;
+            let myScoreText = `Total: ${myTotal}`;
+            
+            if (gameState.state === 'ENDED' && me.score !== null) {
+                myScoreText = `Manche: ${me.score}  |  Total: ${myTotal}`;
+            }
+            
+            document.getElementById('my-score').innerText = myScoreText;
 
             // 4. ADVERSAIRES
             const oppContainer = document.getElementById('opponents-container');
@@ -614,7 +621,8 @@
 
                 const isTurn = (idx === gameState.currentPlayerIndex) ? 'active-turn' : '';
                 oppContainer.innerHTML += `
-                    <div class="player-area ${isTurn}" data-id="${p.id}"> <strong>${p.name} ${p.score !== undefined ? ' • '+p.score+' pts' : ''}</strong>
+                    <div class="player-area ${isTurn}" data-id="${p.id}"> 
+                        <strong>${p.name}${scoreText}</strong>
                         <div class="hand" style="transform: scale(0.8); grid-template-columns: repeat(2, 1fr); justify-content:center; gap:5px;">${oppHandHtml}</div>
                     </div>`;
             });
