@@ -430,7 +430,7 @@ io.on('connection', (socket) => {
             p.hand = [game.deck.pop(), game.deck.pop(), game.deck.pop(), game.deck.pop()];
             p.knownCards = [0, 1]; 
             p.score = null; // On efface le score de la manche précédente
-            // p.totalScore reste intact !
+            // p.totalScore reste intact ! (On ne le remet pas à 0)
         });
 
         const starterName = game.players[starterIndex].name;
@@ -564,11 +564,11 @@ function endGame(room) {
         let roundScore = 0;
         p.hand.forEach(c => roundScore += c.points);
         
-        // On sauvegarde le score de la manche (pour l'affichage immédiat)
+        // 1. Score de la manche
         p.score = roundScore;
         
-        // On l'ajoute au total (Cumul)
-        if (!p.totalScore) p.totalScore = 0;
+        // 2. Score TOTAL cumulé (AJOUT ICI)
+        if (p.totalScore === undefined) p.totalScore = 0;
         p.totalScore += roundScore;
         
         p.knownCards = p.hand.map((_, i) => i); // Tout révéler

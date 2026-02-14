@@ -596,18 +596,24 @@
             if (isMyTurn) myArea.classList.add('active-turn'); else myArea.classList.remove('active-turn');
             const myTotal = me.totalScore || 0;
             let myScoreText = `Total: ${myTotal}`;
-            
             if (gameState.state === 'ENDED' && me.score !== null) {
                 myScoreText = `Manche: ${me.score}  |  Total: ${myTotal}`;
             }
-            
             document.getElementById('my-score').innerText = myScoreText;
+            // ------------------------------
 
-            // 4. ADVERSAIRES
+            // 4. ADVERSAIRES (Affichage du Score Total pour EUX)
             const oppContainer = document.getElementById('opponents-container');
             oppContainer.innerHTML = '';
             gameState.players.forEach((p, idx) => {
                 if(p.id === myId) return;
+                
+                // --- MODIFICATION SCORE ADVERSAIRE ---
+                let scoreText = ` <span style="font-size:0.8em; opacity:0.7;">(${p.totalScore || 0})</span>`;
+                if (gameState.state === 'ENDED' && p.score !== null) {
+                    scoreText = ` • <span style="color:var(--gold-primary)">${p.score}</span> ${scoreText}`;
+                }
+                // -------------------------------------
                 
                 let oppHandHtml = p.hand.map((c, cIdx) => {
                     let action = "";
@@ -620,6 +626,8 @@
                 }).join('');
 
                 const isTurn = (idx === gameState.currentPlayerIndex) ? 'active-turn' : '';
+                
+                // On ajoute scoreText dans le titre
                 oppContainer.innerHTML += `
                     <div class="player-area ${isTurn}" data-id="${p.id}"> 
                         <strong>${p.name}${scoreText}</strong>
